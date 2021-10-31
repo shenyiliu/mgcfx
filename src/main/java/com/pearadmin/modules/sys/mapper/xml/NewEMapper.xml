@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pearadmin.modules.sys.mapper.NewEMapper">
+
+    <resultMap type="NewE" id="NewEResult">
+        <result property="newid"    column="newid"    />
+        <result property="newcontent"    column="newcontent"    />
+        <result property="newurl"    column="newurl"    />
+        <result property="newtitle"    column="newtitle"    />
+        <result property="newcreatetime"    column="newcreatetime"    />
+        <result property="newsource"    column="newsource"    />
+        <result property="newauthor"    column="newauthor"    />
+        <result property="collecttime"    column="collecttime"    />
+        <result property="newother"    column="newother"    />
+    </resultMap>
+
+    <sql id="selectNewEVo">
+        select`newid`,`newcontent`,`newurl`,`newtitle`,`newcreatetime`,`newsource`,`newauthor`,`collecttime`,`newother` from `new_e`
+    </sql>
+
+    <select id="selectNewEList" parameterType="NewE" resultMap="NewEResult">
+        <include refid="selectNewEVo"/>
+        <where>
+            <if test="newcontent != null  and newcontent != ''"> and `newcontent` = #{newcontent}</if>
+            <if test="newurl != null  and newurl != ''"> and `newurl` = #{newurl}</if>
+            <if test="newtitle != null  and newtitle != ''"> and `newtitle` like concat('%', #{newtitle}, '%')</if>
+            <if test="newcreatetime != null "> and `newcreatetime` = #{newcreatetime}</if>
+            <if test="newsource != null  and newsource != ''"> and `newsource` = #{newsource}</if>
+            <if test="newauthor != null  and newauthor != ''"> and `newauthor` = #{newauthor}</if>
+            <if test="collecttime != null "> and `collecttime` = #{collecttime}</if>
+            <if test="newother != null  and newother != ''"> and `newother` = #{newother}</if>
+        </where>
+    </select>
+
+    <select id="selectNewEById" parameterType="Long" resultMap="NewEResult">
+        <include refid="selectNewEVo"/>
+        where `newid` = #{newid}
+    </select>
+
+    <insert id="insertNewE" parameterType="NewE" useGeneratedKeys="true" keyProperty="newid">
+        insert into `new_e`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="newcontent != null">`newcontent`,</if>
+            <if test="newurl != null">`newurl`,</if>
+            <if test="newtitle != null">`newtitle`,</if>
+            <if test="newcreatetime != null">`newcreatetime`,</if>
+            <if test="newsource != null">`newsource`,</if>
+            <if test="newauthor != null">`newauthor`,</if>
+            <if test="collecttime != null">`collecttime`,</if>
+            <if test="newother != null">`newother`,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="newcontent != null">#{newcontent},</if>
+            <if test="newurl != null">#{newurl},</if>
+            <if test="newtitle != null">#{newtitle},</if>
+            <if test="newcreatetime != null">#{newcreatetime},</if>
+            <if test="newsource != null">#{newsource},</if>
+            <if test="newauthor != null">#{newauthor},</if>
+            <if test="collecttime != null">#{collecttime},</if>
+            <if test="newother != null">#{newother},</if>
+         </trim>
+    </insert>
+
+    <update id="updateNewE" parameterType="NewE">
+        update `new_e`
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="newcontent != null">`newcontent` = #{newcontent},</if>
+            <if test="newurl != null">`newurl` = #{newurl},</if>
+            <if test="newtitle != null">`newtitle` = #{newtitle},</if>
+            <if test="newcreatetime != null">`newcreatetime` = #{newcreatetime},</if>
+            <if test="newsource != null">`newsource` = #{newsource},</if>
+            <if test="newauthor != null">`newauthor` = #{newauthor},</if>
+            <if test="collecttime != null">`collecttime` = #{collecttime},</if>
+            <if test="newother != null">`newother` = #{newother},</if>
+        </trim>
+        where `newid` = #{newid}
+    </update>
+
+    <delete id="deleteNewEById" parameterType="Long">
+        delete from `new_e` where `newid` = #{newid}
+    </delete>
+
+    <delete id="deleteNewEByIds" parameterType="String">
+        delete from `new_e` where `newid` in
+        <foreach item="newid" collection="array" open="(" separator="," close=")">
+            #{newid}
+        </foreach>
+    </delete>
+
+</mapper>

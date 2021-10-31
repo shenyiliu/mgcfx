@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pearadmin.modules.sys.mapper.NoticeMapper">
+
+    <resultMap type="Notice" id="NoticeResult">
+        <result property="id"    column="id"    />
+        <result property="title"    column="title"    />
+        <result property="name"    column="name"    />
+        <result property="noticetime"    column="noticeTime"    />
+        <result property="context"    column="context"    />
+    </resultMap>
+
+    <sql id="selectNoticeVo">
+        select`id`,`title`,`name`,`noticeTime`,`context` from `notice`
+    </sql>
+
+    <select id="selectNoticeList" parameterType="Notice" resultMap="NoticeResult">
+        <include refid="selectNoticeVo"/>
+        <where>
+            <if test="title != null  and title != ''"> and `title` = #{title}</if>
+            <if test="name != null  and name != ''"> and `name` like concat('%', #{name}, '%')</if>
+            <if test="noticetime != null "> and `noticeTime` = #{noticetime}</if>
+            <if test="context != null  and context != ''"> and `context` = #{context}</if>
+        </where>
+    </select>
+
+    <select id="selectNoticeById" parameterType="Long" resultMap="NoticeResult">
+        <include refid="selectNoticeVo"/>
+        where `id` = #{id}
+    </select>
+
+    <insert id="insertNotice" parameterType="Notice" useGeneratedKeys="true" keyProperty="id">
+        insert into `notice`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">`title`,</if>
+            <if test="name != null">`name`,</if>
+            <if test="noticetime != null">`noticeTime`,</if>
+            <if test="context != null">`context`,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null">#{title},</if>
+            <if test="name != null">#{name},</if>
+            <if test="noticetime != null">#{noticetime},</if>
+            <if test="context != null">#{context},</if>
+         </trim>
+    </insert>
+
+    <update id="updateNotice" parameterType="Notice">
+        update `notice`
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null">`title` = #{title},</if>
+            <if test="name != null">`name` = #{name},</if>
+            <if test="noticetime != null">`noticeTime` = #{noticetime},</if>
+            <if test="context != null">`context` = #{context},</if>
+        </trim>
+        where `id` = #{id}
+    </update>
+
+    <delete id="deleteNoticeById" parameterType="Long">
+        delete from `notice` where `id` = #{id}
+    </delete>
+
+    <delete id="deleteNoticeByIds" parameterType="String">
+        delete from `notice` where `id` in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

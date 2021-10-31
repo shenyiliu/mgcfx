@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <th:block th:include="include :: header('获取文章列表')" />
+</head>
+<body class="pear-container">
+
+
+
+     <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId" class="layui-form">
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">标题：</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="newtitle" placeholder="请输入标题" class="layui-input" />
+                        </div>
+                        <label class="layui-form-label">文章作者：</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="newauthor" placeholder="请输入文章作者" class="layui-input" />
+                        </div>
+                    <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="newe-query">
+                        <i class="layui-icon layui-icon-search"></i>
+                        查询
+                    </button>
+                    <button type="reset" class="pear-btn pear-btn-md">
+                        <i class="layui-icon layui-icon-refresh"></i>
+                        重置
+                    </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+     </div>
+         <div class="layui-card">
+             <div class="layui-card-body">
+                 <table id="newe-table" lay-filter="newe-table"></table>
+
+                 <script type="text/html" id="newe-toolbar">
+                     <button  sec:authorize="hasPermission('/system/newe/add','system:newe:add')"  class="pear-btn pear-btn-primary pear-btn-md" lay-event="add">
+                         <i class="layui-icon layui-icon-add-1"></i>
+                         新增
+                     </button>
+                     <button  sec:authorize="hasPermission('/system/newe/remove','system:newe:remove')"   class="pear-btn pear-btn-danger pear-btn-md" lay-event="batchRemove">
+                         <i class="layui-icon layui-icon-delete"></i>
+                         删除
+                     </button>
+
+                     <button  sec:authorize="hasPermission('/system/newe/hq','system:newe:getNew')"   class="pear-btn pear-btn-primary pear-btn-md" lay-event="hq">
+                         <i class="layui-icon layui-icon-add-1"></i>
+                         获取文章
+                     </button>
+                 </script>
+
+                 <script type="text/html" id="newe-bar">
+                     <button  sec:authorize="hasPermission('/system/newe/fx','system:newe:fx')"   class="pear-btn pear-btn-primary pear-btn-sm" lay-event="fx"><i class="layui-icon">分析</i>
+                     </button>
+                     <button  sec:authorize="hasPermission('/system/newe/edit','system:newe:edit')"   class="pear-btn pear-btn-primary pear-btn-sm" lay-event="edit"><i class="layui-icon layui-icon-edit"></i>
+                     </button>
+                     <button  sec:authorize="hasPermission('/system/newe/remove','system:newe:remove')"   class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove"><i class="layui-icon layui-icon-delete"></i>
+                     </button>
+                 </script>
+             </div>
+         </div>
+    <th:block th:include="include :: footer" />
+         <script>
+             layui.use(['table', 'form', 'jquery','dictionary'], function () {
+                 let table = layui.table;
+                 let form = layui.form;
+                 let $ = layui.jquery;
+
+                 let prefix = "/system/newe/";
+
+                 let cols = [
+                     [
+                         {type: 'checkbox'},
+                         {
+                             field: 'newid',
+                             title: '文章ID'
+                         },
+                        {
+                             field: 'newcontent',
+                             title: '文章内容'
+                        },
+                        {
+                             field: 'newurl',
+                             title: '路径'
+                        },
+                        {
+                             field: 'newtitle',
+                             title: '标题'
+                        },
+                        {
+                             field: 'newcreatetime',
+                             title: '文章创作时间'
+                        },
+                        {
+                             field: 'newsource',
+                             title: '文章来源'
+                        },
+                        {
+                             field: 'newauthor',
+                             title: '文章作者'
+                        },
+                        {
+                             field: 'collecttime',
+                             title: '收集时间'
+                        },
+                        {
+                             field: 'newother',
+                             title: '其他'
+                        },
+                         {title: '操作', toolbar: '#newe-bar', align: 'center', width: 150}
+                     ]
+                 ]
+
+                 table.render({
+                     elem: '#newe-table',
+                     url: prefix + 'data',
+                     page: true,
+                     cols: cols,
+                     skin: 'line',
+                     toolbar: '#newe-toolbar',
+                     defaultToolbar: [{
+                         layEvent: 'refresh',
+                         icon: 'layui-icon-refresh',
+                     }, 'filter', 'print', 'exports']
+                 });
+
+                 table.on('tool(newe-table)', function (obj) {
+                     if (obj.event === 'remove') {
+                         window.remove(obj);
+                     } else if (obj.event === 'edit') {
+                         window.edit(obj);
+                     } else if (obj.event === 'fx'){
+                         window.fx(obj);
+                     }
+                 });
+
+                 table.on('toolbar(newe-table)', function (obj) {
+                     if (obj.event === 'add') {
+                         window.add();
+                     } else if (obj.event === 'refresh') {
+                         window.refresh();
+                     } else if (obj.event === 'batchRemove') {
+                         window.batchRemove(obj);
+                     } else if (obj.event === 'hq'){
+                         window.hq(obj);
+                     }
+                 });
+
+                 form.on('submit(newe-query)', function (data) {
+                     table.reload('newe-table', {where: data.field})
+                     return false;
+                 });
+
+                 window.add = function () {
+                     layer.open({
+                         type: 2,
+                         title: '新增获取文章',
+                         shade: 0.1,
+                         area: ['550px', '500px'],
+                         content: prefix + 'add'
+                     });
+                 }
+
+                 window.hq = function () {
+                     layer.open({
+                         type: 2,
+                         title: '爬取文章',
+                         shade: 0.1,
+                         area: ['550px', '200px'],
+                         content: prefix + 'hq'
+                     });
+                 }
+
+                 window.edit = function (obj) {
+                     layer.open({
+                         type: 2,
+                         title: '修改获取文章',
+                         shade: 0.1,
+                         area: ['550px', '500px'],
+                         content: prefix + 'edit?newid=' + obj.data['newid']
+                     });
+                 }
+
+                 window.fx = function (obj) {
+                     layer.open({
+                         type: 2,
+                         title: '文章检测',
+                         shade: 0.1,
+                         area: ['800px', '500px'],
+                         content: prefix + 'fx?newid=' + obj.data['newid']
+                     });
+                 }
+
+                 window.remove = function (obj) {
+                     layer.confirm('确定要删除该获取文章', {icon: 3, title: '提示'}, function (index) {
+                         layer.close(index);
+                         let loading = layer.load();
+                         $.ajax({
+                             url: prefix + "remove/" + obj.data['newid'],
+                             dataType: 'json',
+                             type: 'delete',
+                             success: function (result) {
+                                 layer.close(loading);
+                                 if (result.success) {
+                                     layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                         obj.del();
+                                     });
+                                 } else {
+                                     layer.msg(result.msg, {icon: 2, time: 1000});
+                                 }
+                             }
+                         })
+                     });
+                 }
+
+                 window.batchRemove = function (obj) {
+                     let data = table.checkStatus(obj.config.id).data;
+                     if (data.length === 0) {
+                         layer.msg("未选中数据", {icon: 3, time: 1000});
+                         return false;
+                     }
+                     let ids = "";
+                     for (let i = 0; i < data.length; i++) {
+                         ids += data[i].newid + ",";
+                     }
+                     ids = ids.substr(0, ids.length - 1);
+                     layer.confirm('确定要删除这些获取文章', {icon: 3, title: '提示'}, function (index) {
+                         layer.close(index);
+                         let loading = layer.load();
+                         $.ajax({
+                             url: prefix + "batchRemove",
+                             dataType: 'json',
+                             data: {"ids":ids},
+                             type: 'delete',
+                             success: function (result) {
+                                 layer.close(loading);
+                                 if (result.success) {
+                                     layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                         table.reload('newe-table');
+                                     });
+                                 } else {
+                                     layer.msg(result.msg, {icon: 2, time: 1000});
+                                 }
+                             }
+                         })
+                     });
+                 }
+
+                 window.refresh = function (param) {
+                     table.reload('newe-table', {where: param});
+                 }
+             })
+         </script>
+</body>
+</html>
