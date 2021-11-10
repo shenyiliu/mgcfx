@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pearadmin.modules.sys.mapper.NewbadwordMapper">
+
+    <resultMap type="Newbadword" id="NewbadwordResult">
+        <result property="id"    column="id"    />
+        <result property="badword"    column="badword"    />
+        <result property="kind"    column="kind"    />
+    </resultMap>
+
+    <sql id="selectNewbadwordVo">
+        select`id`,`badword`,`kind` from `newbadword`
+    </sql>
+
+    <select id="selectNewbadwordList" parameterType="Newbadword" resultMap="NewbadwordResult">
+        <include refid="selectNewbadwordVo"/>
+        <where>
+            <if test="badword != null  and badword != ''"> and `badword` = #{badword}</if>
+            <if test="kind != null  and kind != ''"> and `kind` = #{kind}</if>
+        </where>
+    </select>
+
+    <select id="selectNewbadwordById" parameterType="Long" resultMap="NewbadwordResult">
+        <include refid="selectNewbadwordVo"/>
+        where `id` = #{id}
+    </select>
+
+    <insert id="insertNewbadword" parameterType="Newbadword" useGeneratedKeys="true" keyProperty="id">
+        insert into `newbadword`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="badword != null">`badword`,</if>
+            <if test="kind != null">`kind`,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="badword != null">#{badword},</if>
+            <if test="kind != null">#{kind},</if>
+         </trim>
+    </insert>
+
+    <update id="updateNewbadword" parameterType="Newbadword">
+        update `newbadword`
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="badword != null">`badword` = #{badword},</if>
+            <if test="kind != null">`kind` = #{kind},</if>
+        </trim>
+        where `id` = #{id}
+    </update>
+
+    <delete id="deleteNewbadwordById" parameterType="Long">
+        delete from `newbadword` where `id` = #{id}
+    </delete>
+
+    <delete id="deleteNewbadwordByIds" parameterType="String">
+        delete from `newbadword` where `id` in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

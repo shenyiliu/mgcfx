@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <th:block th:include="include :: header('高频敏感词列表')" />
+</head>
+<body class="pear-container">
+     <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId" class="layui-form">
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">词语数量</label>
+                        <div class="layui-input-inline">
+                            <select name="s77ys" id="s77ys" lay-verify="required" lay-search>
+                                <option value=""></option>
+                                <option value="100">100</option>
+                                <option value="80">80</option>
+                                <option value="50">50</option>
+                                <option value="30">30</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+                    <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="mgc-query">
+                        <i class="layui-icon layui-icon-search"></i>
+                        查询
+                    </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+     </div>
+         <div class="layui-card">
+             <div class="layui-card-body">
+                 <div id="echarts-records" style="width: 100%;height: 500px;">
+
+                 </div>
+
+
+             </div>
+         </div>
+    <th:block th:include="include :: footer" />
+     <script src='https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js'></script>
+
+     <script src='/admin/js/echarts-wordcloud.js'></script>
+
+
+         <script>
+             var $gpMgcNum;
+             layui.use(['table', 'form', 'jquery','dictionary','echarts'], function () {
+                 let table = layui.table;
+                 let form = layui.form;
+                 let $ = layui.jquery,
+                     echarts = layui.echarts;
+
+
+                 let prefix = "/system/mgc/";
+
+                 let cols = [
+                     [
+                         {type: 'checkbox'},
+                         {
+                             field: 'id',
+                             title: 'ID'
+                         },
+                        {
+                             field: 'name',
+                             title: '名称'
+                        },
+                        {
+                             field: 'mgcNum',
+                             title: '次数'
+                        },
+                         {title: '操作', toolbar: '#mgc-bar', align: 'center', width: 130}
+                     ]
+                 ]
+
+                 table.render({
+                     elem: '#mgc-table',
+                     url: prefix + 'data',
+                     page: true,
+                     cols: cols,
+                     skin: 'line',
+                     toolbar: '#mgc-toolbar',
+                     defaultToolbar: [{
+                         layEvent: 'refresh',
+                         icon: 'layui-icon-refresh',
+                     }, 'filter', 'print', 'exports']
+                 });
+
+                 table.on('tool(mgc-table)', function (obj) {
+                     if (obj.event === 'remove') {
+                         window.remove(obj);
+                     } else if (obj.event === 'edit') {
+                         window.edit(obj);
+                     }
+                 });
+
+                 table.on('toolbar(mgc-table)', function (obj) {
+                     if (obj.event === 'add') {
+                         window.add();
+                     } else if (obj.event === 'refresh') {
+                         window.refresh();
+                     } else if (obj.event === 'batchRemove') {
+                         window.batchRemove(obj);
+                     }
+                 });
+
+                 form.on('submit(mgc-query)', function (data) {
+                     $gpMgcNum=$("#s77ys").val();
+                     initLocat($gpMgcNum);
+                 });
+
+                 window.add = function () {
+                     layer.open({
+                         type: 2,
+                         title: '新增高频敏感词',
+                         shade: 0.1,
+                         area: ['550px', '500px'],
+                         content: prefix + 'add'
+                     });
+                 }
+
+                 window.edit = function (obj) {
+                     layer.open({
+                         type: 2,
+                         title: '修改高频敏感词',
+                         shade: 0.1,
+                         area: ['550px', '500px'],
+                         content: prefix + 'edit?id=' + obj.data['id']
+                     });
+                 }
+
+                 window.remove = function (obj) {
+                     layer.confirm('确定要删除该高频敏感词', {icon: 3, title: '提示'}, function (index) {
+                         layer.close(index);
+                         let loading = layer.load();
+                         $.ajax({
+                             url: prefix + "remove/" + obj.data['id'],
+                             dataType: 'json',
+                             type: 'delete',
+                             success: function (result) {
+                                 layer.close(loading);
+                                 if (result.success) {
+                                     layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                         obj.del();
+                                     });
+                                 } else {
+                                     layer.msg(result.msg, {icon: 2, time: 1000});
+                                 }
+                             }
+                         })
+                     });
+                 }
+
+                 window.batchRemove = function (obj) {
+                     let data = table.checkStatus(obj.config.id).data;
+                     if (data.length === 0) {
+                         layer.msg("未选中数据", {icon: 3, time: 1000});
+                         return false;
+                     }
+                     let ids = "";
+                     for (let i = 0; i < data.length; i++) {
+                         ids += data[i].id + ",";
+                     }
+                     ids = ids.substr(0, ids.length - 1);
+                     layer.confirm('确定要删除这些高频敏感词', {icon: 3, title: '提示'}, function (index) {
+                         layer.close(index);
+                         let loading = layer.load();
+                         $.ajax({
+                             url: prefix + "batchRemove",
+                             dataType: 'json',
+                             data: {"ids":ids},
+                             type: 'delete',
+                             success: function (result) {
+                                 layer.close(loading);
+                                 if (result.success) {
+                                     layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                         table.reload('mgc-table');
+                                     });
+                                 } else {
+                                     layer.msg(result.msg, {icon: 2, time: 1000});
+                                 }
+                             }
+                         })
+                     });
+                 }
+
+                 window.refresh = function (param) {
+                     table.reload('mgc-table', {where: param});
+                 }
+
+                 /**
+                  * 词云
+                  */
+
+
+             });
+
+
+             $(document).ready(function (){
+                 $gpMgcNum=$("#s77ys").val();
+                 initLocat(100);
+             });
+
+             function initLocat(gpMgcNum) {
+                 $.ajax({
+                     url: "/system/mgc/gpMgcList",
+                     dataType: 'json',
+                     type: 'get',
+                     success: function (result) {
+                         var list=[];
+                         var chart = echarts.init(document.getElementById('echarts-records'));
+                         var option;
+                         $.each(result,function (index,item) {
+
+                             list.push({ value: item.mgcNum, name: item.name })
+                             if (index>gpMgcNum){
+                                 return false;
+                             }
+                         })
+
+                         option = {
+                             tooltip: {
+                                 show: true,
+                                 borderColor: '#fe9a8bb3',
+                                 borderWidth: 1,
+                                 padding: [10, 15, 10, 15],
+                                 confine: true,
+                                 backgroundColor: 'rgba(255, 255, 255, .9)',
+                                 textStyle: {
+                                     color: 'hotpink',
+                                     lineHeight: 22
+                                 },
+                                 extraCssText: 'box-shadow: 0 4px 20px -4px rgba(199, 206, 215, .7);border-radius: 4px;'
+                             },
+                             series: [
+                                 {
+                                     type: 'wordCloud',
+                                     // The shape of the "cloud" to draw. Can be any polar equation represented as a
+                                     // callback function, or a keyword present. Available presents are circle (default),
+                                     // cardioid (apple or heart shape curve, the most known polar equation), diamond (
+                                     // alias of square), triangle-forward, triangle, (alias of triangle-upright, pentagon, and star.
+
+                                     shape: 'pentagon',
+
+                                     // A silhouette image which the white area will be excluded from drawing texts.
+                                     // The shape option will continue to apply as the shape of the cloud to grow.
+
+                                     // Folllowing left/top/width/height/right/bottom are used for positioning the word cloud
+                                     // Default to be put in the center and has 75% x 80% size.
+
+                                     left: 'center',
+                                     top: 'center',
+                                     width: '100%',
+                                     height: '100%',
+                                     right: null,
+                                     bottom: null,
+
+                                     // Text size range which the value in data will be mapped to.
+                                     // Default to have minimum 12px and maximum 60px size.
+
+                                     sizeRange: [14, 50],
+
+                                     // Text rotation range and step in degree. Text will be rotated randomly in range [-90, 90] by rotationStep 45
+
+                                     rotationRange: [0, 0],
+                                     rotationStep: 0,
+
+                                     // size of the grid in pixels for marking the availability of the canvas
+                                     // the larger the grid size, the bigger the gap between words.
+
+                                     gridSize: 25,
+
+                                     // set to true to allow word being draw partly outside of the canvas.
+                                     // Allow word bigger than the size of the canvas to be drawn
+                                     drawOutOfBound: false,
+
+                                     // If perform layout animation.
+                                     // NOTE disable it will lead to UI blocking when there is lots of words.
+                                     layoutAnimation: true,
+
+                                     // Global text style
+                                     textStyle: {
+                                         fontFamily: 'PingFangSC-Semibold',
+                                         fontWeight: 600,
+                                         color: function (params) {
+                                             let colors = ['#fe9a8bb3', '#fe9a8bb3', '#fe9a8b03', '#9E87FFb3', '#9E87FFb3', '#9E87FFb3', '#fe9a8bb3', '#fe9a8bb3', '#fe9a8bb3', '#73DDFF', '#58D5FF']
+                                             return colors[parseInt(Math.random() * 10)];
+                                         },
+                                     },
+                                     emphasis: {
+                                         focus: 'none',
+                                     },
+
+                                     // Data is an array. Each array item must have name and value property.
+                                     data: list,
+                                 },
+                             ],
+                         };
+
+
+                         chart.setOption(option);
+
+                         window.onresize = chart.resize;
+                     }
+                 })
+             }
+
+         </script>
+</body>
+</html>

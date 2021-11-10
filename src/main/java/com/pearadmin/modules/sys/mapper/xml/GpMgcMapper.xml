@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pearadmin.modules.sys.mapper.GpMgcMapper">
+
+    <resultMap type="GpMgc" id="GpMgcResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="mgcNum"    column="mgc_num"    />
+    </resultMap>
+
+
+    <sql id="selectGpMgcVo">
+        select`id`,`name`,`mgc_num` from `gp_mgc`
+    </sql>
+
+    <select id="selectNum"  resultType="GpMgc">
+        select id,name,count(0) as mgcNum from gp_mgc
+        group by name
+        order by mgcNum asc
+    </select>
+
+    <select id="selectGpMgcList" parameterType="GpMgc" resultMap="GpMgcResult">
+        <include refid="selectGpMgcVo"/>
+        <where>
+            <if test="name != null  and name != ''"> and `name` like concat('%', #{name}, '%')</if>
+            <if test="mgcNum != null "> and `mgc_num` = #{mgcNum}</if>
+        </where>
+    </select>
+
+    <select id="selectGpMgcById" parameterType="Long" resultMap="GpMgcResult">
+        <include refid="selectGpMgcVo"/>
+        where `id` = #{id}
+    </select>
+
+    <insert id="insertGpMgc" parameterType="GpMgc" useGeneratedKeys="true" keyProperty="id">
+        insert into `gp_mgc`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null">`name`,</if>
+            <if test="mgcNum != null">`mgc_num`,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null">#{name},</if>
+            <if test="mgcNum != null">#{mgcNum},</if>
+         </trim>
+    </insert>
+
+    <update id="updateGpMgc" parameterType="GpMgc">
+        update `gp_mgc`
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">`name` = #{name},</if>
+            <if test="mgcNum != null">`mgc_num` = #{mgcNum},</if>
+        </trim>
+        where `id` = #{id}
+    </update>
+
+    <delete id="deleteGpMgcById" parameterType="Long">
+        delete from `gp_mgc` where `id` = #{id}
+    </delete>
+
+    <delete id="deleteGpMgcByIds" parameterType="String">
+        delete from `gp_mgc` where `id` in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
